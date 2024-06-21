@@ -1,10 +1,12 @@
+#![windows_subsystem = "windows"]
+
 use enigo::{Enigo, Mouse, Settings};
 use global_hotkey::{
     hotkey::{Code, HotKey},
     GlobalHotKeyEvent, GlobalHotKeyManager, HotKeyState,
 };
 use std::{
-    sync::mpsc::{self, SendError, TryRecvError},
+    sync::mpsc::{self, TryRecvError},
     thread,
     time::Duration,
 };
@@ -75,10 +77,11 @@ fn main() {
     let global_hotkey_channel = GlobalHotKeyEvent::receiver();
     let _listener = thread::spawn(move || loop {
         if let Ok(event) = global_hotkey_channel.try_recv() {
-            if hotkey.id == event.id && event.state == HotKeyState::Released {
-                if let Err(_) = sender.send(true) {
-                    break;
-                }
+            if hotkey.id == event.id
+                && event.state == HotKeyState::Released
+                && sender.send(true).is_err()
+            {
+                break;
             }
         }
         thread::sleep(wait_time);
